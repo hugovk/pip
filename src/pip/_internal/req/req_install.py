@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import atexit
 import logging
 import os
 import shutil
@@ -154,9 +155,6 @@ class InstallRequirement(object):
         # Setting an explicit value before loading pyproject.toml is supported,
         # but after loading this flag should be treated as read only.
         self.use_pep517 = use_pep517
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.cleanup()
 
     def __str__(self):
         if self.req:
@@ -570,6 +568,7 @@ class InstallRequirement(object):
             self._temp_dir.path,
             'pip-wheel-metadata',
         )
+        atexit.register(self.cleanup)
 
         ensure_dir(metadata_dir)
 
