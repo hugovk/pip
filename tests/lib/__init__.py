@@ -356,7 +356,7 @@ def check_stderr(
         # would signal a bug in pip's code).
         #    Unlike errors logged with logger.error(), these errors are
         # sent directly to stderr and so bypass any configured log formatter.
-        # The "--- Logging error ---" string is used in Python 3.4+, and
+        # The "--- Logging error ---" string is used in Python 3.5+, and
         # "Logged from file " is used in Python 2.
         if (line.startswith('--- Logging error ---') or
                 line.startswith('Logged from file ')):

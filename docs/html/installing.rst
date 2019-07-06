@@ -6,7 +6,7 @@ Installation
 Do I need to install pip?
 -------------------------
 
-pip is already installed if you are using Python 2 >=2.7.9 or Python 3 >=3.4
+pip is already installed if you are using Python 2 >=2.7.9 or Python 3 >=3.5
 downloaded from `python.org <https://www.python.org>`_ or if you are working
 in a :ref:`Virtual Environment <pypug:Creating and using Virtual Environments>`
 created by :ref:`pypug:virtualenv` or :ref:`pyvenv <pypug:venv>`.
@@ -109,7 +109,7 @@ On Windows [4]_::
 Python and OS Compatibility
 ---------------------------
 
-pip works with CPython versions 2.7, 3.4, 3.5, 3.6, 3.7 and also pypy.
+pip works with CPython versions 2.7, 3.5, 3.6, 3.7 and also PyPy.
 
 This means pip works on the latest patch version of each of these minor
 versions. Previous patch versions are supported on a best effort approach.
