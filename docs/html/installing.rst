@@ -6,7 +6,7 @@ Installation
 Do I need to install pip?
 -------------------------
 
-pip is already installed if you are using Python 2 >=2.7.9 or Python 3 >=3.4
+pip is already installed if you are using Python 2 >=2.7.9 or Python 3 >=3.5
 downloaded from `python.org <https://www.python.org>`_ or if you are working
 in a :ref:`Virtual Environment <pypug:Creating and using Virtual Environments>`
 created by :ref:`pypug:virtualenv` or :ref:`pyvenv <pypug:venv>`.

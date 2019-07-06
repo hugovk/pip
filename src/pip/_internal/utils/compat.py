@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 HAS_TLS = (ssl is not None) or IS_PYOPENSSL
 
-if sys.version_info >= (3, 4):
+if sys.version_info >= (3, 5):
     uses_pycache = True
     from importlib.util import cache_from_source
 else:
@@ -202,7 +202,7 @@ def get_path_uid(path):
     return file_uid
 
 
-if sys.version_info >= (3, 4):
+if sys.version_info >= (3, 5):
     from importlib.machinery import EXTENSION_SUFFIXES
 
     def get_extension_suffixes():
