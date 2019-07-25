@@ -5,7 +5,6 @@ import sys
 import textwrap
 from os.path import curdir, join, pardir
 
-import pip._vendor.six  # noqa: F401
 import pytest
 
 from pip._internal import pep425tags
