@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 
@@ -15,11 +16,21 @@ def test_cache_info(script, monkeypatch):
     result = script.pip('cache', 'info')
     cache_dir = _cache_dir(script)
 
-    assert 'Location: %s' % cache_dir in result.stdout
+    assert 'Root: %s' % cache_dir in result.stdout
+    assert 'Wheels: %s' % cache_dir in result.stdout
     # TODO(@duckinator): This should probably test that the number of
     #   packages is actually correct, but I'm not sure how to do that
     #   without pretty much re-implementing the entire cache info command.
     assert 'Packages: ' in result.stdout
+
+
+def test_cache_info_json(script, monkeypatch):
+    result = script.pip('cache', 'info', '--json')
+    cache_dir = _cache_dir(script)
+
+    assert cache_dir in result.stdout
+    # Check no exception raised
+    json.loads(result.stdout)
 
 
 def test_cache_list(script, monkeypatch):

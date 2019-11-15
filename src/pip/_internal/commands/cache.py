@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import json
 import logging
 import os
 import textwrap
@@ -37,7 +38,7 @@ class CacheCommand(Command):
     """
 
     usage = """
-        %prog info
+        %prog info [--j, --json]
         %prog list [name]
         %prog remove <pattern>
         %prog purge
@@ -46,6 +47,14 @@ class CacheCommand(Command):
     def __init__(self, *args, **kw):
         # type: (*Any, **Any) -> None
         super(CacheCommand, self).__init__(*args, **kw)
+
+        # TODO Only for 'pip cache info'
+        self.cmd_opts.add_option(
+            "--json",
+            "-j",
+            action="store_true",
+            help="Output in machine readable format",
+        )
 
     def run(self, options, args):
         # type: (Values, List[Any]) -> int
@@ -78,14 +87,25 @@ class CacheCommand(Command):
         # type: (Values, List[Any]) -> None
         num_packages = len(self._find_wheels(options, '*'))
 
-        message = textwrap.dedent("""
-            Cache info:
-              Location: {location}
-              Packages: {package_count}
-        """).format(
-            location=self._wheels_cache_dir(options),
-            package_count=num_packages,
-        ).strip()
+        if options.json:
+            message = json.dumps(
+                {
+                    "root": options.cache_dir,
+                    "wheels": self._wheels_cache_dir(options),
+                    "packages": num_packages,
+                }
+            )
+        else:
+            message = textwrap.dedent("""
+                Cache info:
+                  Root: {root}
+                  Wheels: {wheels}
+                  Packages: {package_count}
+            """).format(
+                root=options.cache_dir,
+                wheels=self._wheels_cache_dir(options),
+                package_count=num_packages,
+            ).strip()
 
         logger.info(message)
 
