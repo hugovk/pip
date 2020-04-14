@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 from glob import glob
@@ -96,12 +97,26 @@ def remove_matches_wheel(wheel_cache_dir):
 
 
 @pytest.mark.usefixtures("populate_wheel_cache")
-def test_cache_info(script, wheel_cache_dir, wheel_cache_files):
+def test_cache_info(script, cache_dir, wheel_cache_dir, wheel_cache_files):
     result = script.pip('cache', 'info')
 
-    assert 'Location: {}'.format(wheel_cache_dir) in result.stdout
+    assert 'Root: {}'.format(os.path.normcase(cache_dir)) in result.stdout
+    assert 'Wheels dir: {}'.format(wheel_cache_dir) in result.stdout
     num_wheels = len(wheel_cache_files)
     assert 'Number of wheels: {}'.format(num_wheels) in result.stdout
+
+
+@pytest.mark.usefixtures("populate_wheel_cache")
+def test_cache_info_json(
+    script, cache_dir, wheel_cache_dir, wheel_cache_files
+):
+    result = script.pip('cache', 'info', '--json')
+
+    json_result = json.loads(result.stdout)
+    assert json_result['root'] == os.path.normcase(cache_dir)
+    assert json_result['wheels_dir'] == wheel_cache_dir
+    num_wheels = len(wheel_cache_files)
+    assert json_result['wheels_count'] == num_wheels
 
 
 @pytest.mark.usefixtures("populate_wheel_cache")
