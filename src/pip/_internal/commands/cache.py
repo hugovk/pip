@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import json
 import logging
 import os
 import textwrap
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class CacheCommand(Command):
     """
-    Inspect and manage pip's wheel cache.
+    Inspect and manage pip's cache.
 
     Subcommands:
 
@@ -33,11 +34,22 @@ class CacheCommand(Command):
     """
 
     usage = """
-        %prog info
+        %prog info [--j, --json]
         %prog list [<pattern>]
         %prog remove <pattern>
         %prog purge
     """
+
+    def __init__(self, *args, **kw):
+        # type: (*Any, **Any) -> None
+        super(CacheCommand, self).__init__(*args, **kw)
+
+        self.cmd_opts.add_option(
+            "--json",
+            "-j",
+            action="store_true",
+            help="Output in machine-readable format",
+        )
 
     def run(self, options, args):
         # type: (Values, List[Any]) -> int
@@ -73,18 +85,33 @@ class CacheCommand(Command):
 
         num_packages = len(self._find_wheels(options, '*'))
 
-        cache_location = self._wheels_cache_dir(options)
-        cache_size = filesystem.format_directory_size(cache_location)
+        cache_location = options.cache_dir
+        wheels_cache_location = self._wheels_cache_dir(options)
+        wheels_cache_size = filesystem.format_directory_size(
+            wheels_cache_location
+        )
 
-        message = textwrap.dedent("""
-            Location: {location}
-            Size: {size}
-            Number of wheels: {package_count}
-        """).format(
-            location=cache_location,
-            package_count=num_packages,
-            size=cache_size,
-        ).strip()
+        if options.json:
+            message = json.dumps(
+                {
+                    "root": options.cache_dir,
+                    "wheels_dir": self._wheels_cache_dir(options),
+                    "wheels_size": wheels_cache_size,
+                    "wheels_count": num_packages,
+                }
+            )
+        else:
+            message = textwrap.dedent("""
+                Root: {root}
+                Wheels dir: {wheels}
+                Wheels size: {size}
+                Number of wheels: {package_count}
+            """).format(
+                root=cache_location,
+                wheels=wheels_cache_location,
+                package_count=num_packages,
+                size=wheels_cache_size,
+            ).strip()
 
         logger.info(message)
 
