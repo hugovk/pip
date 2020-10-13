@@ -314,7 +314,7 @@ def test_uninstall_editable_from_svn(script, tmpdir):
         'install', '-e',
         '{checkout}#egg=tinytext'.format(
             checkout=local_checkout(
-                'svn+https://svn.code.sf.net/p/svn-tinytext/code/', tmpdir)
+                'svn+https://svn.code.sf.net/p/svn-tinytext/code', tmpdir)
         ),
     )
     result.assert_installed('tinytext')
@@ -377,7 +377,7 @@ def test_uninstall_from_reqs_file(script, tmpdir):
 
     """
     local_svn_url = local_checkout(
-        'svn+https://svn.code.sf.net/p/svn-tinytext/code/', tmpdir,
+        'svn+https://svn.code.sf.net/p/svn-tinytext/code', tmpdir,
     )
     script.scratch_path.joinpath("test-req.txt").write_text(
         textwrap.dedent("""

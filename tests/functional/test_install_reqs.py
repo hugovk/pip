@@ -173,7 +173,7 @@ def test_multiple_requirements_files(script, tmpdir, with_wheel):
             -r {}-req.txt
         """).format
         (
-            local_checkout('svn+https://svn.code.sf.net/p/svn-tinytext/code/', tmpdir),
+            local_checkout('svn+https://svn.code.sf.net/p/svn-tinytext/code', tmpdir),
             other_lib_name
         ),
     )

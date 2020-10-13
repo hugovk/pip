@@ -58,7 +58,7 @@ class Tests_UserSite:
             'install', '--user', '-e',
             '{checkout}#egg=tinytext'.format(
                 checkout=local_checkout(
-                    'svn+https://svn.code.sf.net/p/svn-tinytext/code/', tmpdir)
+                    'svn+https://svn.code.sf.net/p/svn-tinytext/code', tmpdir)
             )
         )
         result.assert_installed('tinytext', use_user_site=True)
