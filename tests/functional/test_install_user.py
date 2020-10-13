@@ -45,7 +45,6 @@ class Tests_UserSite:
         project_name = result.stdout.strip()
         assert 'INITools' == project_name, project_name
 
-    @pytest.mark.xfail
     @pytest.mark.network
     @need_svn
     @pytest.mark.incompatible_with_test_venv
@@ -57,12 +56,12 @@ class Tests_UserSite:
         """
         result = script.pip(
             'install', '--user', '-e',
-            '{checkout}#egg=initools'.format(
+            '{checkout}#egg=tinytext'.format(
                 checkout=local_checkout(
-                    'svn+http://svn.colorstudy.com/INITools', tmpdir)
+                    'svn+https://svn.code.sf.net/p/svn-tinytext/code/', tmpdir)
             )
         )
-        result.assert_installed('INITools', use_user_site=True)
+        result.assert_installed('tinytext', use_user_site=True)
 
     @pytest.mark.incompatible_with_test_venv
     def test_install_from_current_directory_into_usersite(

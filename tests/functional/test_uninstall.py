@@ -312,14 +312,14 @@ def test_uninstall_editable_from_svn(script, tmpdir):
     """
     result = script.pip(
         'install', '-e',
-        '{checkout}#egg=initools'.format(
+        '{checkout}#egg=tinytext'.format(
             checkout=local_checkout(
-                'svn+http://svn.colorstudy.com/INITools', tmpdir)
+                'svn+https://svn.code.sf.net/p/svn-tinytext/code/', tmpdir)
         ),
     )
-    result.assert_installed('INITools')
-    result2 = script.pip('uninstall', '-y', 'initools')
-    assert (script.venv / 'src' / 'initools' in result2.files_after)
+    result.assert_installed('tinytext')
+    result2 = script.pip('uninstall', '-y', 'tinytext')
+    assert (script.venv / 'src' / 'tinytext' in result2.files_after)
     assert_all_changes(
         result,
         result2,
@@ -369,7 +369,6 @@ def _test_uninstall_editable_with_source_outside_venv(
     )
 
 
-@pytest.mark.xfail
 @pytest.mark.network
 @need_svn
 def test_uninstall_from_reqs_file(script, tmpdir):
@@ -378,11 +377,11 @@ def test_uninstall_from_reqs_file(script, tmpdir):
 
     """
     local_svn_url = local_checkout(
-        'svn+http://svn.colorstudy.com/INITools', tmpdir,
+        'svn+https://svn.code.sf.net/p/svn-tinytext/code/', tmpdir,
     )
     script.scratch_path.joinpath("test-req.txt").write_text(
         textwrap.dedent("""
-            -e {url}#egg=initools
+            -e {url}#egg=tinytext
             # and something else to test out:
             PyLogo<0.4
         """).format(url=local_svn_url)
@@ -395,7 +394,7 @@ def test_uninstall_from_reqs_file(script, tmpdir):
             -i http://www.example.com
             --extra-index-url http://www.example.com
 
-            -e {url}#egg=initools
+            -e {url}#egg=tinytext
             # and something else to test out:
             PyLogo<0.4
         """).format(url=local_svn_url)

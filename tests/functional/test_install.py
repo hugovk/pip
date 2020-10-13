@@ -758,7 +758,6 @@ def test_install_using_install_option_and_editable(script, tmpdir):
     result.did_create(script_file)
 
 
-@pytest.mark.xfail
 @pytest.mark.network
 @need_mercurial
 @windows_workaround_7667
@@ -766,12 +765,12 @@ def test_install_global_option_using_editable(script, tmpdir):
     """
     Test using global distutils options, but in an editable installation
     """
-    url = 'hg+http://bitbucket.org/runeh/anyjson'
+    url = 'hg+https://hg.sr.ht/~cnx/lazip'
     result = script.pip(
         'install', '--global-option=--version', '-e',
-        '{url}@0.2.5#egg=anyjson'.format(url=local_checkout(url, tmpdir)),
+        '{url}@0.2.5#egg=lazip'.format(url=local_checkout(url, tmpdir)),
         expect_stderr=True)
-    assert 'Successfully installed anyjson' in result.stdout
+    assert 'Successfully installed lazip' in result.stdout
 
 
 @pytest.mark.network

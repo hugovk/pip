@@ -59,7 +59,7 @@ def local_checkout(
         os.mkdir(directory)
 
     if vcs_name == 'svn':
-        assert repository_name == 'INITools'
+        assert repository_name == 'svn-tinytext'
         _create_svn_initools_repo(repo_url_path)
         repo_url_path = os.path.join(repo_url_path, 'trunk')
     else:

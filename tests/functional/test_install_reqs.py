@@ -159,7 +159,6 @@ def test_relative_requirements_file(
             result.did_create(egg_link_file)
 
 
-@pytest.mark.xfail
 @pytest.mark.network
 @need_svn
 def test_multiple_requirements_files(script, tmpdir, with_wheel):
@@ -168,13 +167,13 @@ def test_multiple_requirements_files(script, tmpdir, with_wheel):
 
     """
     other_lib_name, other_lib_version = 'anyjson', '0.3'
-    script.scratch_path.joinpath("initools-req.txt").write_text(
+    script.scratch_path.joinpath("tinytext-req.txt").write_text(
         textwrap.dedent("""
-            -e {}@10#egg=INITools
+            -e {}@10#egg=tinytext
             -r {}-req.txt
         """).format
         (
-            local_checkout('svn+http://svn.colorstudy.com/INITools', tmpdir),
+            local_checkout('svn+https://svn.code.sf.net/p/svn-tinytext/code/', tmpdir),
             other_lib_name
         ),
     )
@@ -183,12 +182,12 @@ def test_multiple_requirements_files(script, tmpdir, with_wheel):
             "{other_lib_name}<={other_lib_version}".format(**locals())
     )
     result = script.pip(
-        'install', '-r', script.scratch_path / 'initools-req.txt'
+        'install', '-r', script.scratch_path / 'tinytext-req.txt'
     )
     assert result.files_created[script.site_packages / other_lib_name].dir
     fn = '{other_lib_name}-{other_lib_version}.dist-info'.format(**locals())
     assert result.files_created[script.site_packages / fn].dir
-    result.did_create(script.venv / 'src' / 'initools')
+    result.did_create(script.venv / 'src' / 'tinytext')
 
 
 def test_package_in_constraints_and_dependencies(script, data):
