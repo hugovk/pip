@@ -7,23 +7,17 @@ addons:
     packages:
     - bzr
 
-stages:
-- primary
-- secondary
-- experimental
+#stages:
+#- primary
+#- secondary
+#- experimental
 
 jobs:
   include:
-    # Basic Checks
-    - stage: primary
-      env: TOXENV=docs
-    - env: TOXENV=lint
-    - env: TOXENV=vendoring
-
     # Complete checking for ensuring compatibility
     # PyPy
-    - stage: secondary
-      env: GROUP=1
+#    - stage: secondary
+    - env: GROUP=1
       python: pypy3.5-7.0.0
     - env: GROUP=2
       python: pypy3.5-7.0.0
@@ -32,10 +26,16 @@ jobs:
     - env: GROUP=2
       python: pypy2.7-7.1.1
 
+    # Basic Checks
+    - stage: primary
+      env: TOXENV=docs
+    - env: TOXENV=lint
+    - env: TOXENV=vendoring
+
     # Test experimental stuff that are not part of the standard pip usage.
     # Helpful for developers working on them to see how they're doing.
-    - stage: experimental
-      env:
+#    - stage: experimental
+    - env:
       - GROUP=1
       - NEW_RESOLVER=1
     - env:
