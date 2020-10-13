@@ -27,8 +27,8 @@ jobs:
       python: pypy2.7-7.1.1
 
     # Basic Checks
-    - stage: primary
-      env: TOXENV=docs
+#    - stage: primary
+    - env: TOXENV=docs
     - env: TOXENV=lint
     - env: TOXENV=vendoring
 
