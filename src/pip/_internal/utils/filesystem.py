@@ -191,3 +191,21 @@ def directory_size(path):
 def format_directory_size(path):
     # type: (str) -> str
     return format_size(directory_size(path))
+
+
+def list_empty_subdirs(path):
+    # type: (str) -> List[str]
+    """Returns a list of absolute paths of empty directories beneath path.
+    """
+    result = []  # type: List[str]
+    for root, dirs, _files in os.walk(path, topdown=False):
+        result.extend(os.path.join(root, d) for d in dirs)
+    return result
+
+
+def remove_subdirs(path):
+    # type: (str)  -> None
+    """Removes all subdirectories under path."""
+    for entry in os.scandir(path):
+        if entry.is_dir():
+            shutil.rmtree(entry.path)

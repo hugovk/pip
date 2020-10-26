@@ -175,24 +175,34 @@ class CacheCommand(Command):
 
         files = self._find_wheels(options, args[0])
 
-        # Only fetch http files if no specific pattern given
-        if args[0] == '*':
-            files += self._find_http_files(options)
-
         if not files:
             raise CommandError('No matching packages')
 
         for filename in files:
             os.unlink(filename)
             logger.verbose("Removed %s", filename)
+
+        dirs = filesystem.list_empty_subdirs(self._cache_dir(options, "http")) + \
+            filesystem.list_empty_subdirs(self._cache_dir(options, "wheels"))
+        for dirname in dirs:
+            os.rmdir(dirname)
+
         logger.info("Files removed: %s", len(files))
+        logger.info("Empty directories removed: %s", len(dirs))
 
     def purge_cache(self, options, args):
         # type: (Values, List[Any]) -> None
         if args:
             raise CommandError('Too many arguments')
 
-        return self.remove_cache_items(options, ['*'])
+        # Remove everything in the "http" and "wheels" cache directories.
+        filesystem.remove_subdirs(self._cache_dir(options, 'http'))
+        filesystem.remove_subdirs(self._cache_dir(options, 'wheels'))
+
+        # selfcheck.json is no longer used by pip.
+        selfcheck_json = self._cache_dir(options, 'selfcheck.json')
+        if os.path.isfile(selfcheck_json):
+            os.remove(selfcheck_json)
 
     def _cache_dir(self, options, subdir):
         # type: (Values, str) -> str
