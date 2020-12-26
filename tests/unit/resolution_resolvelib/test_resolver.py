@@ -1,4 +1,4 @@
-import mock
+import mock  # TODO Replace with 'from unittest import mock' after pip 21.0
 import pytest
 from pip._vendor.packaging.utils import canonicalize_name
 from pip._vendor.resolvelib.resolvers import Result

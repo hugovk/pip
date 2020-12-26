@@ -3,12 +3,12 @@ import os.path
 import re
 import uuid
 from textwrap import dedent
+from unittest import mock
+from unittest.mock import Mock, patch
 from urllib import request as urllib_request
 
-import mock
 import pretend
 import pytest
-from mock import Mock, patch
 from pip._vendor import html5lib, requests
 
 from pip._internal.exceptions import NetworkConnectionError
