@@ -26,20 +26,7 @@ if MYPY_CHECK_RUNNING:
 logger = logging.getLogger(__name__)
 
 
-SUPPORTED_EXTENSIONS = ZIP_EXTENSIONS + TAR_EXTENSIONS
-
-try:
-    import bz2  # noqa
-    SUPPORTED_EXTENSIONS += BZ2_EXTENSIONS
-except ImportError:
-    logger.debug('bz2 module is not available')
-
-try:
-    # Only for Python 3.3+
-    import lzma  # noqa
-    SUPPORTED_EXTENSIONS += XZ_EXTENSIONS
-except ImportError:
-    logger.debug('lzma module is not available')
+SUPPORTED_EXTENSIONS = ZIP_EXTENSIONS + TAR_EXTENSIONS + BZ2_EXTENSIONS + XZ_EXTENSIONS
 
 
 def current_umask():
