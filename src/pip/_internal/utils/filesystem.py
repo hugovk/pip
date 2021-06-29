@@ -195,8 +195,7 @@ def format_directory_size(path):
 
 def list_empty_subdirs(path):
     # type: (str) -> List[str]
-    """Returns a list of absolute paths of empty directories beneath path.
-    """
+    """Returns a list of absolute paths of empty directories beneath path."""
     result = []  # type: List[str]
     for root, dirs, _files in os.walk(path, topdown=False):
         result.extend(os.path.join(root, d) for d in dirs)
