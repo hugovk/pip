@@ -97,6 +97,7 @@ jobs:
           - 3.7
           - 3.8
           - 3.9
+          - 3.10-dev
 
     steps:
       - uses: actions/checkout@v2
@@ -138,6 +139,7 @@ jobs:
           # - 3.7
           # - 3.8
           - 3.9
+          - 3.10-dev
         group: [1, 2]
 
     steps:
