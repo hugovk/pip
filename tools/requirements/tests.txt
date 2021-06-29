@@ -7,6 +7,6 @@ pytest-rerunfailures
 pytest-xdist
 scripttest
 setuptools
-virtualenv < 20.0
+virtualenv >= 20.4.7
 werkzeug
 wheel
