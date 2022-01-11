@@ -94,7 +94,7 @@ def test_schema_check_in_requirements_file(script: PipTestEnvironment) -> None:
     """
     script.scratch_path.joinpath("file-egg-req.txt").write_text(
         "\n{}\n".format(
-            "git://github.com/alex/django-fixture-generator.git"
+            "https://github.com/alex/django-fixture-generator.git"
             "#egg=fixture_generator"
         )
     )
