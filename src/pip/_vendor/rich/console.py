@@ -697,7 +697,12 @@ class Console:
         self._height = height
 
         self._color_system: Optional[ColorSystem]
-        self._force_terminal = force_terminal
+
+        if force_terminal is not None:
+            self._force_terminal = force_terminal
+        else:
+            self._force_terminal = self._environ.get("FORCE_COLOR") is not None
+
         self._file = file
         self.quiet = quiet
         self.stderr = stderr
@@ -1996,9 +2001,11 @@ class Console:
                             from pip._vendor.rich._win32_console import LegacyWindowsTerm
                             from pip._vendor.rich._windows_renderer import legacy_windows_render
 
-                            legacy_windows_render(
-                                self._buffer[:], LegacyWindowsTerm(self.file)
-                            )
+                            buffer = self._buffer[:]
+                            if self.no_color and self._color_system:
+                                buffer = list(Segment.remove_color(buffer))
+
+                            legacy_windows_render(buffer, LegacyWindowsTerm(self.file))
                         else:
                             # Either a non-std stream on legacy Windows, or modern Windows.
                             text = self._render_buffer(self._buffer[:])
