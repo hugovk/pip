@@ -574,10 +574,8 @@ def test_uninstall_without_record_fails(
             "simple.dist==0.1'."
         )
     elif installer:
-        expected_error_message += " Hint: The package was installed by {}.".format(
-            installer
-        )
-    assert result2.stderr.rstrip() == expected_error_message
+        expected_error_message += f" Hint: The package was installed by {installer}."
+    assert expected_error_message in result2.stderr.rstrip()
     assert_all_changes(result.files_after, result2, ignore_changes)
 
 

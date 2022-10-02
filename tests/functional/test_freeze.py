@@ -616,13 +616,10 @@ def test_freeze_with_requirement_option_file_url_egg_not_installed(
         expect_stderr=True,
     )
     expected_err = (
-        "WARNING: Requirement file [requirements.txt] contains {}, "
-        "but package 'Does.Not-Exist' is not installed\n"
-    ).format(url)
-    if deprecated_python:
-        assert expected_err in result.stderr
-    else:
-        assert expected_err == result.stderr
+        f"WARNING: Requirement file [requirements.txt] contains {url}, "
+        "but package 'Does.Not-Exist' is not installed"
+    )
+    assert expected_err in result.stderr
 
 
 def test_freeze_with_requirement_option(script: PipTestEnvironment) -> None:
@@ -854,7 +851,7 @@ def test_freeze_with_requirement_option_package_repeated_multi_file(
         "Requirement file [hint2.txt] contains NoExist, but package "
         "'NoExist' is not installed\n"
     )
-    err2 = "Requirement simple included multiple times [hint1.txt, hint2.txt]\n"
+    err2 = "Requirement simple included multiple times [hint1.txt, hint2.txt]"
     assert err1 in result.stderr
     assert err2 in result.stderr
     # there shouldn't be any other 'is not installed' warnings
