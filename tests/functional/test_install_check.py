@@ -5,7 +5,7 @@ from tests.lib import PipTestEnvironment, create_test_package_with_setup
 
 def assert_contains_expected_lines(string: str, expected_lines: Iterable[str]) -> None:
     for expected_line in expected_lines:
-        assert (expected_line + "\n") in string
+        assert expected_line in string
 
 
 def test_check_install_canonicalization(script: PipTestEnvironment) -> None:
