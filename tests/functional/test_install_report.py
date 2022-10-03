@@ -207,7 +207,7 @@ def test_install_report_to_stdout(
     )
     assert result.stderr == (
         "WARNING: --report is currently an experimental option. "
-        "The output format may change in a future release without prior warning.\n"
+        "The output format may change in a future release without prior warning."
     )
     report = json.loads(result.stdout)
     assert "install" in report
