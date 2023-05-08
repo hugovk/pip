@@ -127,7 +127,10 @@ def get_prog() -> str:
 # Tenacity raises RetryError by default, explicitly raise the original exception
 @retry(reraise=True, stop=stop_after_delay(3), wait=wait_fixed(0.5))
 def rmtree(dir: str, ignore_errors: bool = False) -> None:
-    shutil.rmtree(dir, ignore_errors=ignore_errors, onerror=rmtree_errorhandler)
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(dir, ignore_errors=ignore_errors, onexc=rmtree_errorhandler)
+    else:
+        shutil.rmtree(dir, ignore_errors=ignore_errors, onerror=rmtree_errorhandler)
 
 
 def rmtree_errorhandler(func: Callable[..., Any], path: str, exc_info: ExcInfo) -> None:
