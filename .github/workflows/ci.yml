@@ -164,6 +164,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
+          allow-prereleases: true
 
       # We use a RAMDisk on Windows, since filesystem IO is a big slowdown
       # for our tests.
