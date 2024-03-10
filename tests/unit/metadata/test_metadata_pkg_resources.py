@@ -82,9 +82,9 @@ def test_wheel_metadata_works() -> None:
     name = "simple"
     version = "0.1.0"
     require_a = "a==1.0"
-    require_b = 'b==1.1; extra == "also_b"'
-    requires = [require_a, require_b, 'c==1.2; extra == "also_c"']
-    extras = ["also_b", "also_c"]
+    require_b = 'b==1.1; extra == "also-b"'
+    requires = [require_a, require_b, 'c==1.2; extra == "also-c"']
+    extras = ["also-b", "also-c"]
     requires_python = ">=3"
 
     metadata = email.message.Message()
@@ -109,7 +109,7 @@ def test_wheel_metadata_works() -> None:
     assert set(extras) == set(dist.iter_provided_extras())
     assert [require_a] == [str(r) for r in dist.iter_dependencies()]
     assert [require_a, require_b] == [
-        str(r) for r in dist.iter_dependencies(["also_b"])
+        str(r) for r in dist.iter_dependencies(["also-b"])
     ]
     assert metadata.as_string() == dist.metadata.as_string()
     assert SpecifierSet(requires_python) == dist.requires_python
