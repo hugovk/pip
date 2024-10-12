@@ -3,8 +3,8 @@ import json
 import os
 import pathlib
 import re
+from collections.abc import Iterable
 from os.path import basename
-from typing import Iterable
 
 import pytest
 from pip._vendor.packaging.utils import canonicalize_name

@@ -114,7 +114,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-13, macos-latest]
         python:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
@@ -172,13 +171,12 @@ jobs:
       matrix:
         os: [Windows]
         python:
-          - "3.8"
+          - "3.9"
           # Commented out, since Windows tests are expensively slow,
           # only test the oldest and newest Python supported by pip
-          # - "3.9"
           # - "3.10"
           # - "3.11"
-          - "3.12"  # Comment out when 3.13 is final
+          # - "3.12"
           - "3.13"
         group: [1, 2]
 

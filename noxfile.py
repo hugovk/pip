@@ -6,8 +6,8 @@ import glob
 import os
 import shutil
 import sys
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator, List, Tuple
 
 import nox
 
@@ -67,7 +67,7 @@ def should_update_common_wheels() -> bool:
 # -----------------------------------------------------------------------------
 # Development Commands
 # -----------------------------------------------------------------------------
-@nox.session(python=["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "pypy3"])
+@nox.session(python=["3.9", "3.10", "3.11", "3.12", "3.13", "pypy3"])
 def test(session: nox.Session) -> None:
     # Get the common wheels.
     if should_update_common_wheels():
@@ -130,7 +130,7 @@ def docs(session: nox.Session) -> None:
     session.install("-e", ".")
     session.install("-r", REQUIREMENTS["docs"])
 
-    def get_sphinx_build_command(kind: str) -> List[str]:
+    def get_sphinx_build_command(kind: str) -> list[str]:
         # Having the conf.py in the docs/html is weird but needed because we
         # can not use a different configuration directory vs source directory
         # on RTD currently. So, we'll pass "-c docs/html" here.
@@ -206,7 +206,7 @@ def vendoring(session: nox.Session) -> None:
         session.run("vendoring", "sync", "-v")
         return
 
-    def pinned_requirements(path: Path) -> Iterator[Tuple[str, str]]:
+    def pinned_requirements(path: Path) -> Iterator[tuple[str, str]]:
         for line in path.read_text().splitlines(keepends=False):
             one, sep, two = line.partition("==")
             if not sep:
@@ -349,7 +349,7 @@ def build_release(session: nox.Session) -> None:
             shutil.copy(dist, final)
 
 
-def build_dists(session: nox.Session) -> List[str]:
+def build_dists(session: nox.Session) -> list[str]:
     """Return dists with valid metadata."""
     session.log(
         "# Check if there's any Git-untracked files before building the wheel",

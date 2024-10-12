@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Optional
 from unittest import TestCase, mock
 
 import pytest
@@ -50,7 +50,7 @@ def test_ensure_svn_available() -> None:
         ),
     ],
 )
-def test_make_vcs_requirement_url(args: Tuple[Any, ...], expected: str) -> None:
+def test_make_vcs_requirement_url(args: tuple[Any, ...], expected: str) -> None:
     actual = make_vcs_requirement_url(*args)
     assert actual == expected
 
@@ -78,10 +78,10 @@ def test_rev_options_repr() -> None:
     ],
 )
 def test_rev_options_to_args(
-    vc_class: Type[VersionControl],
-    expected1: List[str],
-    expected2: List[str],
-    kwargs: Dict[str, Any],
+    vc_class: type[VersionControl],
+    expected1: list[str],
+    expected2: list[str],
+    kwargs: dict[str, Any],
 ) -> None:
     """
     Test RevOptions.to_args().
@@ -149,7 +149,7 @@ def test_looks_like_hash(sha: str, expected: bool) -> None:
     ],
 )
 def test_should_add_vcs_url_prefix(
-    vcs_cls: Type[VersionControl], remote_url: str, expected: bool
+    vcs_cls: type[VersionControl], remote_url: str, expected: bool
 ) -> None:
     actual = vcs_cls.should_add_vcs_url_prefix(remote_url)
     assert actual == expected
@@ -323,7 +323,7 @@ def test_git_is_commit_id_equal(
     ],
 )
 def test_git__get_netloc_and_auth(
-    args: Tuple[str, str], expected: Tuple[str, Tuple[None, None]]
+    args: tuple[str, str], expected: tuple[str, tuple[None, None]]
 ) -> None:
     """
     Test VersionControl.get_netloc_and_auth().
@@ -352,7 +352,7 @@ def test_git__get_netloc_and_auth(
     ],
 )
 def test_subversion__get_netloc_and_auth(
-    args: Tuple[str, str], expected: Tuple[str, Tuple[Optional[str], Optional[str]]]
+    args: tuple[str, str], expected: tuple[str, tuple[Optional[str], Optional[str]]]
 ) -> None:
     """
     Test Subversion.get_netloc_and_auth().
@@ -392,7 +392,7 @@ def test_git__get_url_rev__idempotent() -> None:
     ],
 )
 def test_version_control__get_url_rev_and_auth(
-    url: str, expected: Tuple[str, None, Tuple[None, None]]
+    url: str, expected: tuple[str, None, tuple[None, None]]
 ) -> None:
     """
     Test the basic case of VersionControl.get_url_rev_and_auth().
@@ -449,7 +449,7 @@ def test_version_control__get_url_rev_and_auth__no_revision(url: str) -> None:
     ids=["FileNotFoundError", "PermissionError", "NotADirectoryError"],
 )
 def test_version_control__run_command__fails(
-    vcs_cls: Type[VersionControl], exc_cls: Type[Exception], msg_re: str
+    vcs_cls: type[VersionControl], exc_cls: type[Exception], msg_re: str
 ) -> None:
     """
     Test that ``VersionControl.run_command()`` raises ``BadCommand``
@@ -528,7 +528,7 @@ def test_bazaar__get_url_rev_and_auth(url: str, expected: str) -> None:
     ],
 )
 def test_subversion__get_url_rev_and_auth(
-    url: str, expected: Tuple[str, None, Tuple[Optional[str], Optional[str]]]
+    url: str, expected: tuple[str, None, tuple[Optional[str], Optional[str]]]
 ) -> None:
     """
     Test Subversion.get_url_rev_and_auth().
@@ -608,7 +608,7 @@ def test_get_git_version() -> None:
         ("git version 2.GIT", ()),  # invalid version
     ],
 )
-def test_get_git_version_parser(version: str, expected: Tuple[int, int]) -> None:
+def test_get_git_version_parser(version: str, expected: tuple[int, int]) -> None:
     with mock.patch("pip._internal.vcs.git.Git.run_command", return_value=version):
         assert Git().get_git_version() == expected
 
@@ -674,7 +674,7 @@ def test_subversion__call_vcs_version() -> None:
 )
 @mock.patch("pip._internal.vcs.subversion.Subversion.run_command")
 def test_subversion__call_vcs_version_patched(
-    mock_run_command: mock.Mock, svn_output: str, expected_version: Tuple[int, ...]
+    mock_run_command: mock.Mock, svn_output: str, expected_version: tuple[int, ...]
 ) -> None:
     """
     Test Subversion.call_vcs_version() against patched output.
@@ -705,7 +705,7 @@ def test_subversion__call_vcs_version_svn_not_installed(
         (1, 8, 0),
     ],
 )
-def test_subversion__get_vcs_version_cached(version: Tuple[int, ...]) -> None:
+def test_subversion__get_vcs_version_cached(version: tuple[int, ...]) -> None:
     """
     Test Subversion.get_vcs_version() with previously cached result.
     """
@@ -724,7 +724,7 @@ def test_subversion__get_vcs_version_cached(version: Tuple[int, ...]) -> None:
 )
 @mock.patch("pip._internal.vcs.subversion.Subversion.call_vcs_version")
 def test_subversion__get_vcs_version_call_vcs(
-    mock_call_vcs: mock.Mock, vcs_version: Tuple[int, ...]
+    mock_call_vcs: mock.Mock, vcs_version: tuple[int, ...]
 ) -> None:
     """
     Test Subversion.get_vcs_version() with mocked output from
@@ -750,7 +750,7 @@ def test_subversion__get_vcs_version_call_vcs(
     ],
 )
 def test_subversion__get_remote_call_options(
-    use_interactive: bool, vcs_version: Tuple[int, ...], expected_options: List[str]
+    use_interactive: bool, vcs_version: tuple[int, ...], expected_options: list[str]
 ) -> None:
     """
     Test Subversion.get_remote_call_options().

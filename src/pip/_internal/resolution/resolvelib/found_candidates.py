@@ -10,8 +10,8 @@ something.
 
 import functools
 import logging
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, Callable, Iterator, Optional, Set, Tuple
+from collections.abc import Iterator, Sequence
+from typing import Any, Callable, Optional
 
 from pip._vendor.packaging.version import _BaseVersion
 
@@ -21,22 +21,8 @@ from .base import Candidate
 
 logger = logging.getLogger(__name__)
 
-IndexCandidateInfo = Tuple[_BaseVersion, Callable[[], Optional[Candidate]]]
-
-if TYPE_CHECKING:
-    SequenceCandidate = Sequence[Candidate]
-else:
-    # For compatibility: Python before 3.9 does not support using [] on the
-    # Sequence class.
-    #
-    # >>> from collections.abc import Sequence
-    # >>> Sequence[str]
-    # Traceback (most recent call last):
-    #   File "<stdin>", line 1, in <module>
-    # TypeError: 'ABCMeta' object is not subscriptable
-    #
-    # TODO: Remove this block after dropping Python 3.8 support.
-    SequenceCandidate = Sequence
+IndexCandidateInfo = tuple[_BaseVersion, Callable[[], Optional[Candidate]]]
+SequenceCandidate = Sequence[Candidate]
 
 
 def _iter_built(infos: Iterator[IndexCandidateInfo]) -> Iterator[Candidate]:
@@ -45,7 +31,7 @@ def _iter_built(infos: Iterator[IndexCandidateInfo]) -> Iterator[Candidate]:
     This iterator is used when the package is not already installed. Candidates
     from index come later in their normal ordering.
     """
-    versions_found: Set[_BaseVersion] = set()
+    versions_found: set[_BaseVersion] = set()
     for version, func in infos:
         if version in versions_found:
             continue
@@ -81,7 +67,7 @@ def _iter_built_with_prepended(
     normal ordering, except skipped when the version is already installed.
     """
     yield installed
-    versions_found: Set[_BaseVersion] = {installed.version}
+    versions_found: set[_BaseVersion] = {installed.version}
     for version, func in infos:
         if version in versions_found:
             continue
@@ -105,7 +91,7 @@ def _iter_built_with_inserted(
     the installed candidate exactly once before we start yielding older or
     equivalent candidates, or after all other candidates if they are all newer.
     """
-    versions_found: Set[_BaseVersion] = set()
+    versions_found: set[_BaseVersion] = set()
     for version, func in infos:
         if version in versions_found:
             continue
@@ -138,7 +124,7 @@ class FoundCandidates(SequenceCandidate):
         get_infos: Callable[[], Iterator[IndexCandidateInfo]],
         installed: Optional[Candidate],
         prefers_installed: bool,
-        incompatible_ids: Set[int],
+        incompatible_ids: set[int],
     ):
         self._get_infos = get_infos
         self._installed = installed

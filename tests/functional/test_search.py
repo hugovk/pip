@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING
 from unittest import mock
 
 import pytest
@@ -27,7 +27,7 @@ def test_pypi_xml_transformation() -> None:
     Test transformation of data structures (PyPI xmlrpc to custom list).
 
     """
-    pypi_hits: List[Dict[str, str]] = [
+    pypi_hits: list[dict[str, str]] = [
         {
             "name": "foo",
             "summary": "foo summary",
@@ -45,7 +45,7 @@ def test_pypi_xml_transformation() -> None:
             "version": "1.0",
         },
     ]
-    expected: List[TransformedHit] = [
+    expected: list[TransformedHit] = [
         {
             "versions": ["1.0", "2.0"],
             "name": "foo",
@@ -159,7 +159,7 @@ def test_latest_prerelease_install_message(
     """
     Test documentation for installing pre-release packages is displayed
     """
-    hits: List[TransformedHit] = [
+    hits: list[TransformedHit] = [
         {
             "name": "ni",
             "summary": "For knights who say Ni!",
@@ -188,7 +188,7 @@ def test_search_print_results_should_contain_latest_versions(
     """
     Test that printed search results contain the latest package versions
     """
-    hits: List[TransformedHit] = [
+    hits: list[TransformedHit] = [
         {
             "name": "testlib1",
             "summary": "Test library 1.",

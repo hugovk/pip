@@ -5,7 +5,7 @@ import shutil
 import textwrap
 from hashlib import sha256
 from pathlib import Path
-from typing import Callable, List, Tuple
+from typing import Callable
 
 import pytest
 
@@ -669,7 +669,7 @@ def test_download__python_version_used_for_python_requires(
     )
     wheel_dir = os.path.dirname(wheel_path)
 
-    def make_args(python_version: str) -> List[str]:
+    def make_args(python_version: str) -> list[str]:
         return [
             "download",
             "--no-index",
@@ -1239,14 +1239,14 @@ def download_local_html_index(
     script: PipTestEnvironment,
     html_index_for_packages: Path,
     tmpdir: Path,
-) -> Callable[..., Tuple[TestPipResult, Path]]:
+) -> Callable[..., tuple[TestPipResult, Path]]:
     """Execute `pip download` against a generated PyPI index."""
     download_dir = tmpdir / "download_dir"
 
     def run_for_generated_index(
-        args: List[str],
+        args: list[str],
         allow_error: bool = False,
-    ) -> Tuple[TestPipResult, Path]:
+    ) -> tuple[TestPipResult, Path]:
         """
         Produce a PyPI directory structure pointing to the specified packages, then
         execute `pip download -i ...` pointing to our generated index.
@@ -1270,14 +1270,14 @@ def download_server_html_index(
     script: PipTestEnvironment,
     tmpdir: Path,
     html_index_with_onetime_server: http.server.ThreadingHTTPServer,
-) -> Callable[..., Tuple[TestPipResult, Path]]:
+) -> Callable[..., tuple[TestPipResult, Path]]:
     """Execute `pip download` against a generated PyPI index."""
     download_dir = tmpdir / "download_dir"
 
     def run_for_generated_index(
-        args: List[str],
+        args: list[str],
         allow_error: bool = False,
-    ) -> Tuple[TestPipResult, Path]:
+    ) -> tuple[TestPipResult, Path]:
         """
         Produce a PyPI directory structure pointing to the specified packages, then
         execute `pip download -i ...` pointing to our generated index.
@@ -1312,9 +1312,9 @@ def download_server_html_index(
     ],
 )
 def test_download_metadata(
-    download_local_html_index: Callable[..., Tuple[TestPipResult, Path]],
+    download_local_html_index: Callable[..., tuple[TestPipResult, Path]],
     requirement_to_download: str,
-    expected_outputs: List[str],
+    expected_outputs: list[str],
 ) -> None:
     """Verify that if a data-dist-info-metadata attribute is present, then it is used
     instead of the actual dist's METADATA."""
@@ -1349,9 +1349,9 @@ def test_download_metadata(
     ],
 )
 def test_download_metadata_server(
-    download_server_html_index: Callable[..., Tuple[TestPipResult, Path]],
+    download_server_html_index: Callable[..., tuple[TestPipResult, Path]],
     requirement_to_download: str,
-    expected_outputs: List[str],
+    expected_outputs: list[str],
     doubled_path: str,
 ) -> None:
     """Verify that if a data-dist-info-metadata attribute is present, then it is used
@@ -1389,7 +1389,7 @@ def test_download_metadata_server(
     ],
 )
 def test_incorrect_metadata_hash(
-    download_local_html_index: Callable[..., Tuple[TestPipResult, Path]],
+    download_local_html_index: Callable[..., tuple[TestPipResult, Path]],
     requirement_to_download: str,
     real_hash: str,
 ) -> None:
@@ -1414,7 +1414,7 @@ def test_incorrect_metadata_hash(
     ],
 )
 def test_metadata_not_found(
-    download_local_html_index: Callable[..., Tuple[TestPipResult, Path]],
+    download_local_html_index: Callable[..., tuple[TestPipResult, Path]],
     requirement_to_download: str,
     expected_url: str,
 ) -> None:
@@ -1434,7 +1434,7 @@ def test_metadata_not_found(
 
 
 def test_produces_error_for_mismatched_package_name_in_metadata(
-    download_local_html_index: Callable[..., Tuple[TestPipResult, Path]],
+    download_local_html_index: Callable[..., tuple[TestPipResult, Path]],
 ) -> None:
     """Verify that the package name from the metadata matches the requested package."""
     result, _ = download_local_html_index(
@@ -1457,7 +1457,7 @@ def test_produces_error_for_mismatched_package_name_in_metadata(
     ],
 )
 def test_canonicalizes_package_name_before_verifying_metadata(
-    download_local_html_index: Callable[..., Tuple[TestPipResult, Path]],
+    download_local_html_index: Callable[..., tuple[TestPipResult, Path]],
     requirement: str,
 ) -> None:
     """Verify that the package name from the command line and the package's
