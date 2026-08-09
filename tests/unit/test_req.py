@@ -25,6 +25,7 @@ from pip._internal.cache import WheelCache
 from pip._internal.commands import create_command
 from pip._internal.commands.install import InstallCommand
 from pip._internal.exceptions import (
+    CommandError,
     HashErrors,
     InstallationError,
     InvalidWheelFilename,
@@ -119,6 +120,7 @@ class TestRequirementSet:
                 lazy_wheel=False,
                 verbosity=0,
                 legacy_resolver=True,
+                allow_editables=True,
             )
             yield Resolver(
                 preparer=preparer,
@@ -128,6 +130,7 @@ class TestRequirementSet:
                 use_user_site=False,
                 upgrade_strategy="to-satisfy-only",
                 ignore_dependencies=False,
+                only_dependencies=False,
                 ignore_installed=False,
                 ignore_requires_python=False,
                 force_reinstall=False,
@@ -208,6 +211,55 @@ class TestRequirementSet:
             options, args = command.parse_args(["-r", os.fspath(reqs_file)])
             command.get_requirements(args, options, finder, session)
         assert options.require_hashes
+
+    def test_auto_require_hashes(self, data: TestData, tmpdir: Path) -> None:
+        """A requirement with hashes auto-enables --require-hashes"""
+        finder = make_test_finder(find_links=[data.find_links])
+        session = finder._link_collector.session
+        command = cast(InstallCommand, create_command("install"))
+        reqs = (
+            r"simple==1.0 --hash=sha256:393043e672415891885c9a2a0929b1"
+            r"af95fb866d6ca016b42d2e6ce53619b653$"
+        )
+        with requirements_file(reqs, tmpdir) as reqs_file:
+            options, args = command.parse_args(["-r", os.fspath(reqs_file)])
+            command.get_requirements(args, options, finder, session)
+        assert options.require_hashes
+
+    def test_no_auto_require_hashes(self, data: TestData, tmpdir: Path) -> None:
+        """A requirement with hashes does not auto-enable --require-hashes
+        when --no-require-hashes is set"""
+        finder = make_test_finder(find_links=[data.find_links])
+        session = finder._link_collector.session
+        command = cast(InstallCommand, create_command("install"))
+        reqs = (
+            r"simple==1.0 --hash=sha256:393043e672415891885c9a2a0929b1"
+            r"af95fb866d6ca016b42d2e6ce53619b653$"
+        )
+        with requirements_file("--no-require-hashes\n" + reqs, tmpdir) as reqs_file:
+            options, args = command.parse_args(["-r", os.fspath(reqs_file)])
+            command.get_requirements(args, options, finder, session)
+        assert not options.require_hashes
+
+    def test_require_hashes_no_require_hashes_in_reqs_file(
+        self, data: TestData, tmpdir: Path
+    ) -> None:
+        finder = make_test_finder(find_links=[data.find_links])
+        session = finder._link_collector.session
+        command = cast(InstallCommand, create_command("install"))
+        reqs = (
+            r"simple==1.0 --hash=sha256:393043e672415891885c9a2a0929b1"
+            r"af95fb866d6ca016b42d2e6ce53619b653$"
+        )
+        with requirements_file(
+            "--require-hashes\n--no-require-hashes\n" + reqs, tmpdir
+        ) as reqs_file:
+            options, args = command.parse_args(["-r", os.fspath(reqs_file)])
+            with pytest.raises(
+                CommandError,
+                match="--require-hashes and --no-require-hashes are mutually exclusive",
+            ):
+                command.get_requirements(args, options, finder, session)
 
     def test_unsupported_hashes(self, data: TestData) -> None:
         """VCS and dir links should raise errors when --require-hashes is
@@ -640,6 +692,11 @@ class TestInstallRequirement:
         assert str(req.req.specifier) == ""
         assert str(req.markers) == 'os_name == "a; b"'
 
+    def test_markers_invalid(self) -> None:
+        with pytest.raises(InstallationError) as e:
+            install_req_from_line('name; python_version == "1"; python_version == "2"')
+        assert "Invalid requirement" in e.value.args[0]
+
     def test_markers_url(self) -> None:
         # test "URL; markers" syntax
         url = "http://foo.com/?p=bar.git;a=snapshot;h=v0.1;sf=tgz"
@@ -805,7 +862,6 @@ class TestInstallRequirement:
         assert without_extras.constraint == req.constraint
         assert without_extras.config_settings == req.config_settings
         assert without_extras.user_supplied == req.user_supplied
-        assert without_extras.permit_editable_wheels == req.permit_editable_wheels
 
     @pytest.mark.parametrize(
         "inp, extras, out",
@@ -852,7 +908,6 @@ class TestInstallRequirement:
         assert extended.constraint == req.constraint
         assert extended.config_settings == req.config_settings
         assert extended.user_supplied == req.user_supplied
-        assert extended.permit_editable_wheels == req.permit_editable_wheels
 
 
 @pytest.mark.parametrize(

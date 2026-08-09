@@ -133,18 +133,26 @@ def message_about_scripts_not_on_PATH(scripts: Sequence[str]) -> str | None:
         script_name = dest_path.name
         grouped_by_dir[parent_dir].add(script_name)
 
-    # We don't want to warn for directories that are on PATH.
-    not_warn_dirs = [
-        Path(i).resolve() for i in os.environ.get("PATH", "").split(os.pathsep)
-    ]
     # If an executable sits with sys.executable, we don't warn for it.
     #     This covers the case of venv invocations without activating the venv.
-    not_warn_dirs.append(Path(sys.executable).parent.resolve())
+    executable_dir = Path(sys.executable).parent.resolve()
+    path_entries = os.environ.get("PATH", "").split(os.pathsep)
+
+    # We don't want to warn for directories that are on PATH.
     warn_for: dict[Path, set[str]] = {
         parent_dir: scripts
         for parent_dir, scripts in grouped_by_dir.items()
-        if parent_dir not in not_warn_dirs
+        if parent_dir != executable_dir and str(parent_dir) not in path_entries
     }
+
+    # Resolving PATH entries can be slow, so only do it for what's left.
+    if warn_for:
+        not_warn_dirs = {Path(i).resolve() for i in path_entries}
+        warn_for = {
+            parent_dir: scripts
+            for parent_dir, scripts in warn_for.items()
+            if parent_dir not in not_warn_dirs
+        }
     if not warn_for:
         return None
 
@@ -173,9 +181,7 @@ def message_about_scripts_not_on_PATH(scripts: Sequence[str]) -> str | None:
         msg_lines.append(last_line_fmt.format("these directories"))
 
     # Add a note if any directory starts with ~
-    warn_for_tilde = any(
-        i[0] == "~" for i in os.environ.get("PATH", "").split(os.pathsep) if i
-    )
+    warn_for_tilde = any(i[0] == "~" for i in path_entries if i)
     if warn_for_tilde:
         tilde_warning_msg = (
             "NOTE: The current PATH contains path(s) starting with `~`, "
@@ -441,6 +447,7 @@ def _install_wheel(  # noqa: C901, PLR0915 function is too long
     warn_script_location: bool = True,
     direct_url: DirectUrl | None = None,
     requested: bool = False,
+    script_executable: str | None = None,
 ) -> None:
     """Install a wheel.
 
@@ -452,6 +459,7 @@ def _install_wheel(  # noqa: C901, PLR0915 function is too long
     :param pycompile: Whether to byte-compile installed Python files
     :param warn_script_location: Whether to check that scripts are installed
         into a directory on PATH
+    :param script_executable: Python executable to use for console scripts
     :raises UnsupportedWheel:
         * when the directory holds an unpacked wheel with incompatible
           Wheel-Version
@@ -640,6 +648,12 @@ def _install_wheel(  # noqa: C901, PLR0915 function is too long
 
     maker = PipScriptMaker(None, scheme.scripts)
 
+    # Embed the target environment's interpreter in console-script launchers
+    # rather than the one running pip, so an in-process install into another
+    # environment (e.g. a venv build environment) produces working launchers.
+    if script_executable is not None:
+        maker.executable = script_executable  # type: ignore  # it's untyped in distlib
+
     # Ensure old scripts are overwritten.
     # See https://github.com/pypa/pip/issues/1800
     maker.clobber = True
@@ -739,6 +753,7 @@ def install_wheel(
     warn_script_location: bool = True,
     direct_url: DirectUrl | None = None,
     requested: bool = False,
+    script_executable: str | None = None,
 ) -> None:
     with ZipFile(wheel_path, allowZip64=True) as z:
         with req_error_context(req_description):
@@ -751,4 +766,5 @@ def install_wheel(
                 warn_script_location=warn_script_location,
                 direct_url=direct_url,
                 requested=requested,
+                script_executable=script_executable,
             )

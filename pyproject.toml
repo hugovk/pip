@@ -22,6 +22,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
@@ -76,6 +77,18 @@ test-common-wheels = [
     "coverage >= 4.4",
     "pytest-subket >= 0.8.1",
     "keyring",
+    "cmake",
+]
+
+typecheck = [
+    {include-group = "test"},
+    "keyring",  # An optional runtime dependency.
+    "nox",
+    "packaging",
+    "httpx",
+    "rich",
+    "types-PyYAML",  # tools/update-rtd-redirects.py
+    "types-setuptools",  # provides top-level distutils stubs for locations/
 ]
 
 docs = [
@@ -96,10 +109,10 @@ include = [
     "NEWS.rst",
     "SECURITY.md",
     "AI_POLICY.md",
-    "build-project/.python-version",
+    "build-project/README.md",
     "build-project/build-project.py",
-    "build-project/build-requirements.in",
-    "build-project/build-requirements.txt",
+    "build-project/pyproject.toml",
+    "build-project/pylock.toml",
     "docs/**/*.css",
     "docs/**/*.dot",
     "docs/**/*.md",
@@ -216,6 +229,7 @@ ignore = [
     "B904", # Ruff enables opinionated warnings by default
     "B905", # Ruff enables opinionated warnings by default
     "C420", # unnecessary-dict-comprehension-for-iterable (worsens readability)
+    "ISC004" # implicit-string-concatenation-in-collection-literal
 ]
 select = [
     "ASYNC",
@@ -262,7 +276,7 @@ max-complexity = 33  # default is 10
 "src/pip/__pip-runner__.py" = ["UP"] # Must be compatible with Python 2.7
 
 [tool.ruff.lint.pylint]
-max-args = 15  # default is 5
+max-args = 16  # default is 5
 max-branches = 28  # default is 12
 max-returns = 15  # default is 6
 max-statements = 134  # default is 50

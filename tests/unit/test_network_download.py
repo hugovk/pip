@@ -3,17 +3,25 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, BinaryIO
 from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from pip._vendor.urllib3.exceptions import ProtocolError
+from pip._vendor.urllib3.connectionpool import HTTPConnectionPool
+from pip._vendor.urllib3.exceptions import ProtocolError, ProxyError, ReadTimeoutError
 
-from pip._internal.exceptions import IncompleteDownloadError
+from pip._internal.exceptions import (
+    ConnectionFailedError,
+    ConnectionTimeoutError,
+    IncompleteDownloadError,
+    ProxyConnectionError,
+    SSLMissingError,
+)
 from pip._internal.models.link import Link
 from pip._internal.network.download import (
     Downloader,
+    _FileDownload,
     _get_http_response_size,
     _log_download,
     parse_content_disposition,
@@ -111,6 +119,24 @@ def test_log_download(
     record = caplog.records[0]
     assert record.levelname == "INFO"
     assert expected in record.message
+
+
+@pytest.mark.parametrize(
+    "content_length, expected",
+    [
+        ("0", 0),
+        ("36", 36),
+        ("", None),
+        ("not-a-number", None),
+        # A negative length must not be passed through: it would make
+        # _FileDownload.is_incomplete() treat a truncated download as complete.
+        ("-1", None),
+    ],
+)
+def test_get_http_response_size(content_length: str, expected: int | None) -> None:
+    resp = MockResponse(b"")
+    resp.headers["content-length"] = content_length
+    assert _get_http_response_size(resp) == expected
 
 
 @pytest.mark.parametrize(
@@ -336,12 +362,10 @@ def test_downloader(
 
     with patch.object(Downloader, "_http_get", _http_get_mock):
         if expected_bytes is None:
-            remove = MagicMock(return_value=None)
-            with patch("os.remove", remove):
-                with pytest.raises(IncompleteDownloadError):
-                    downloader(link, str(tmpdir))
+            with pytest.raises(IncompleteDownloadError):
+                downloader(link, str(tmpdir))
             # Make sure the incomplete file is removed
-            remove.assert_called_once()
+            assert not (tmpdir / "foo.tgz").exists()
         else:
             filepath, _ = downloader(link, str(tmpdir))
             with open(filepath, "rb") as downloaded_file:
@@ -357,6 +381,66 @@ def test_downloader(
 
     # Make sure that the downloader makes additional requests for resumption
     _http_get_mock.assert_has_calls(calls)
+
+
+def _incomplete_response() -> MockResponse:
+    response = MockResponse(b"partial")
+    response.headers.update({"content-length": "12"})
+    response.status_code = 200
+    return response
+
+
+def test_incomplete_download_is_closed_before_removal(tmpdir: Path) -> None:
+    """Windows can't delete an open file."""
+    session = PipSession(resume_retries=0)
+    link = Link("http://example.com/foo.tgz")
+    downloader = Downloader(session, "on")
+
+    downloads: list[_FileDownload] = []
+
+    def record_download(
+        link: Link, output_file: BinaryIO, size: int | None
+    ) -> _FileDownload:
+        download = _FileDownload(link, output_file, size)
+        downloads.append(download)
+        return download
+
+    def remove_like_windows(filename: str) -> None:
+        if not downloads[-1].output_file.closed:
+            raise PermissionError("The file is being used by another process")
+        Path(filename).unlink()
+
+    with (
+        patch.object(
+            Downloader, "_http_get", MagicMock(return_value=_incomplete_response())
+        ),
+        patch("pip._internal.network.download._FileDownload", record_download),
+        patch("pip._internal.network.download.os.remove", remove_like_windows),
+        pytest.raises(IncompleteDownloadError),
+    ):
+        downloader(link, str(tmpdir))
+
+    assert not (tmpdir / "foo.tgz").exists()
+
+
+def test_failed_removal_does_not_mask_incomplete_download(tmpdir: Path) -> None:
+    session = PipSession(resume_retries=0)
+    link = Link("http://example.com/foo.tgz")
+    downloader = Downloader(session, "on")
+
+    def remove_denied(filename: str) -> None:
+        raise PermissionError("The file is being used by another process")
+
+    with (
+        patch.object(
+            Downloader, "_http_get", MagicMock(return_value=_incomplete_response())
+        ),
+        patch("pip._internal.network.download.os.remove", remove_denied),
+        pytest.raises(IncompleteDownloadError),
+    ):
+        downloader(link, str(tmpdir))
+
+    assert (tmpdir / "foo.tgz").exists()
 
 
 def test_downloader_resumes_on_protocol_error(tmpdir: Path) -> None:
@@ -385,8 +469,18 @@ def test_downloader_resumes_on_protocol_error(tmpdir: Path) -> None:
         assert f.read() == b"0cfa7e9d-1868-4dd7-9fb3-f2561d5dfd89"
 
 
-def test_downloader_retries_protocol_error_during_resume(tmpdir: Path) -> None:
-    """A ProtocolError raised while fetching a resume response is retried."""
+@pytest.mark.parametrize(
+    "resume_error",
+    [
+        ProtocolError("Connection broken"),
+        ReadTimeoutError(HTTPConnectionPool("example.com"), None, "Read timed out"),
+        OSError("Connection broken"),
+    ],
+)
+def test_downloader_retries_low_level_errors_during_resume(
+    resume_error: Exception, tmpdir: Path
+) -> None:
+    """Low-level errors raised while fetching a resume response are retried."""
     session = PipSession(resume_retries=5)
     link = Link("http://example.com/foo.tgz")
     downloader = Downloader(session, "on")
@@ -402,10 +496,7 @@ def test_downloader_retries_protocol_error_during_resume(tmpdir: Path) -> None:
     resume_resp.headers.update({"content-length": "12"})
     resume_resp.status_code = 206
 
-    # The first resume attempt drops with a ProtocolError before responding
-    _http_get_mock = MagicMock(
-        side_effect=[broken_resp, ProtocolError("Connection broken"), resume_resp]
-    )
+    _http_get_mock = MagicMock(side_effect=[broken_resp, resume_error, resume_resp])
 
     with patch.object(Downloader, "_http_get", _http_get_mock):
         filepath, _ = downloader(link, str(tmpdir))
@@ -413,6 +504,73 @@ def test_downloader_retries_protocol_error_during_resume(tmpdir: Path) -> None:
     assert _http_get_mock.call_count == 3
     with open(filepath, "rb") as f:
         assert f.read() == b"0cfa7e9d-1868-4dd7-9fb3-f2561d5dfd89"
+
+
+@pytest.mark.parametrize(
+    "resume_error",
+    [
+        ConnectionFailedError(
+            "https://example.com/foo.tgz",
+            "example.com",
+            ConnectionError("Connection broken"),
+        ),
+        ConnectionTimeoutError(
+            "https://example.com/foo.tgz",
+            "example.com",
+            kind="read",
+            timeout=15,
+        ),
+        ProxyConnectionError(
+            "https://example.com/foo.tgz",
+            "https://proxy.example.com",
+            ProxyError("Cannot connect to proxy", OSError("Connection broken")),
+        ),
+    ],
+)
+def test_downloader_retries_diagnostic_connection_errors_during_resume(
+    resume_error: Exception, tmpdir: Path
+) -> None:
+    """Diagnostic connection errors during resume should consume a resume retry."""
+    session = PipSession(resume_retries=5)
+    link = Link("http://example.com/foo.tgz")
+    downloader = Downloader(session, "on")
+
+    broken_resp = MockResponse(b"0cfa7e9d-1868-4dd7-9fb3-")
+    broken_resp.headers.update({"content-length": "36"})
+    broken_resp.status_code = 200
+
+    resume_resp = MockResponse(b"f2561d5dfd89")
+    resume_resp.headers.update({"content-length": "12"})
+    resume_resp.status_code = 206
+
+    _http_get_mock = MagicMock(side_effect=[broken_resp, resume_error, resume_resp])
+
+    with patch.object(Downloader, "_http_get", _http_get_mock):
+        filepath, _ = downloader(link, str(tmpdir))
+
+    assert _http_get_mock.call_count == 3
+    with open(filepath, "rb") as f:
+        assert f.read() == b"0cfa7e9d-1868-4dd7-9fb3-f2561d5dfd89"
+
+
+def test_downloader_does_not_retry_on_ssl_missing_error(tmpdir: Path) -> None:
+    """SSL errors during resume should fail immediately because retries can't help."""
+    session = PipSession(resume_retries=5)
+    link = Link("http://example.com/foo.tgz")
+    downloader = Downloader(session, "on")
+
+    broken_resp = MockResponse(b"0cfa7e9d-1868-4dd7-9fb3-")
+    broken_resp.headers.update({"content-length": "36"})
+    broken_resp.status_code = 200
+    resume_error = SSLMissingError("https://example.com/foo.tgz")
+
+    _http_get_mock = MagicMock(side_effect=[broken_resp, resume_error])
+
+    with patch.object(Downloader, "_http_get", _http_get_mock):
+        with pytest.raises(type(resume_error)):
+            downloader(link, str(tmpdir))
+
+    assert _http_get_mock.call_count == 2
 
 
 def test_downloader_resumes_on_truncated_http_stream(
@@ -447,6 +605,35 @@ def test_downloader_resumes_on_truncated_http_stream(
 
     with open(filepath, "rb") as f:
         assert f.read() == body
+
+
+def test_downloader_crashes_on_mismatched_resume_offset(tmpdir: Path) -> None:
+    """A 206 whose Content-Range starts at a different offset than requested
+    must fail, otherwise the misplaced bytes would corrupt the file."""
+    body = b"0cfa7e9d-1868-4dd7-9fb3-f2561d5dfd89"
+    session = PipSession(resume_retries=5)
+    link = Link("http://example.com/foo.tgz")
+    downloader = Downloader(session, "on")
+
+    # Incomplete first response (24 of 36 bytes).
+    first = MockResponse(body[:24])
+    first.headers.update({"content-length": "36"})
+    first.status_code = 200
+
+    # The resume asks for bytes=24- but the server answers with content that
+    # (per its Content-Range) starts at offset 0.
+    mismatched = MockResponse(b"XXXXXXXXXXXX")
+    mismatched.headers.update(
+        {"content-length": "12", "content-range": "bytes 0-11/36"}
+    )
+    mismatched.status_code = 206
+
+    _http_get_mock = MagicMock(side_effect=[first, mismatched])
+    with patch.object(Downloader, "_http_get", _http_get_mock):
+        with pytest.raises(IncompleteDownloadError):
+            downloader(link, str(tmpdir))
+
+    assert not (tmpdir / "foo.tgz").exists()
 
 
 def test_downloader_without_content_length(tmpdir: Path) -> None:
